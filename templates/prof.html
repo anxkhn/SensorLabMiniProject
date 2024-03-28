@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Professor Page</title>
+  </head>
+  <body>
+    <h1>Welcome, Professor!</h1>
+    <form action="{{ url_for('prof_start') }}" method="POST">
+      <button type="submit">Professor Start</button>
+    </form>
+    <form action="{{ url_for('prof_end') }}" method="POST">
+      <button type="submit">Professor End</button>
+    </form>
+  </body>
+</html>

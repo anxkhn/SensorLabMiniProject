@@ -6,8 +6,11 @@ from cs50 import SQL
 import os
 from PIL import Image
 from pyzbar import pyzbar
-from picamera2 import PiCamera2
+from picamera2 import Picamera2
 import time
+import RPi.GPIO as GPIO
+from mfrc522 import SimpleMFRC522
+
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -16,6 +19,8 @@ key = "example_key"
 
 # Database initialization
 db = SQL("sqlite:///users.db")
+
+professor_name = "NoProf"
 
 
 # Function to check if user is authenticated
@@ -37,7 +42,7 @@ def round_to_nearest_5min(t):
 
 
 # Function to combine username, current time, and key
-def combine_strings(username, current_time, key):
+def combine_strings(username, current_time):
     return username + current_time + key
 
 
@@ -64,44 +69,70 @@ def verify_encoded_username(username, provided_encoded_username, current_time):
 # Decode QR code route
 @app.route("/decode_qr", methods=["POST"])
 def decode_qr():
-    # Start the camera
-    picam2 = PiCamera2()
-    camera_config = picam2.create_still_configuration(
-        main={"size": (1920, 1080)}, lores={"size": (640, 480)}, display="lores"
-    )
-    picam2.configure(camera_config)
+    picam2 = Picamera2()
+    time.sleep(2)
     picam2.start()
     time.sleep(2)  # Wait for the camera to warm up
 
-    # Capture image
-    temp_filename = "temp_qr_image.jpg"
-    picam2.capture_file(temp_filename)
-    picam2.stop()
+    try:
+        # Capture image
+        temp_filename = "temp_qr_image.jpg"
+        picam2.capture_file(temp_filename)
 
-    # Load the captured image
-    image = Image.open(temp_filename)
+        # Load the captured image
+        image = Image.open(temp_filename)
 
-    # Convert the image to grayscale
-    gray = image.convert("L")
+        # Convert the image to grayscale
+        gray = image.convert("L")
 
-    # Find QR codes in the image
-    barcodes = pyzbar.decode(gray)
+        # Find QR codes in the image
+        barcodes = pyzbar.decode(gray)
 
-    # Check if barcodes are found
-    if barcodes:
-        # Loop over the detected barcodes
-        for barcode in barcodes:
-            # Extract barcode data
-            barcode_data = barcode.data.decode("utf-8")
-            extracted_username, extracted_hash = barcode_data.split(",")
-            my_time = get_current_time()
-            if verify_encoded_username(extracted_username, extracted_hash, my_time):
-                os.remove(temp_filename)
-                return jsonify({"message": "QR code matched sucessfully."})
-            return jsonify({"message": "QR code does not match any stored user data."})
-    else:
+        # Check if barcodes are found
+        if barcodes:
+            # Loop over the detected barcodes
+            for barcode in barcodes:
+                # Extract barcode data
+                barcode_data = barcode.data.decode("utf-8")
+                extracted_username, extracted_hash = barcode_data.split(",")
+                my_time = get_current_time().strftime("%Y-%m-%d %H:%M:%S")
+                if verify_encoded_username(extracted_username, extracted_hash, my_time):
+                    print(
+                        f"Attendance marked for {extracted_username}, Lecture by {professor_name}"
+                    )
+                    return jsonify({"message": "QR code matched successfully."})
+                else:
+                    return jsonify(
+                        {"message": "QR code does not match any stored user data."}
+                    )
+        else:
+            return jsonify({"message": "No QR code found."})
+    finally:
+        # Stop the camera and remove the temporary image file
+        picam2.stop()
+        picam2.close()
         os.remove(temp_filename)  # Remove the temporary image file
-        return jsonify({"message": "No QR code found."})
+
+
+@app.route("/prof_start", methods=["GET", "POST"])
+def prof_start():
+    reader = SimpleMFRC522()
+    global professor_name
+    print("Please scan your RFID professor card to start the lecture:")
+    professor_id, professor_name = reader.read()
+    print(f"Professor ID: {professor_id}, Professor Name: {professor_name} ")
+    print("Lecture has started. Students can now scan their QR codes.")
+    GPIO.cleanup()
+
+
+@app.route("/prof_end", methods=["GET", "POST"])
+def prof_end():
+    reader = SimpleMFRC522()
+    global professor_name
+    print("Please scan your RFID professor card to end the lecture:")
+    professor_id, professor_name = reader.read()
+    print(f"Professor ID: {professor_id}, Professor Name: {professor_name} ")
+    GPIO.cleanup()
 
 
 # Login route
@@ -160,18 +191,28 @@ def generate_qr():
 
     username = session["username"]
     current_time = round_to_nearest_5min(datetime.now()).strftime("%Y-%m-%d %H:%M:%S")
-    encode_data = encode_username(username, current_time, key)
+    encode_data = encode_username(username, current_time)
     img_str = username + "," + encode_data
     return render_template("generate_qr.html", img_str=img_str)
 
 
-# Main route
 @app.route("/")
 def index():
+    if is_authenticated():
+        if session["username"] == "prof":
+            return redirect(url_for("prof"))
+        else:
+            return redirect(url_for("generate_qr"))
+    return redirect(url_for("login"))
+
+
+# Professor route
+@app.route("/prof")
+def prof():
     if not is_authenticated():
         return redirect(url_for("login"))
-    return redirect(url_for("generate_qr"))
+    return render_template("prof.html")
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=80, debug=True)
