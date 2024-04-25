@@ -1,16 +1,16 @@
-from flask import Flask, render_template, request, redirect, url_for, session, jsonify
+import os
+import time
 from datetime import datetime, timedelta
 from hashlib import sha256
-from flask_qrcode import QRcode
+
+import RPi.GPIO as GPIO
 from cs50 import SQL
-import os
+from flask import Flask, jsonify, redirect, render_template, request, session, url_for
+from flask_qrcode import QRcode
+from mfrc522 import SimpleMFRC522
+from picamera2 import Picamera2
 from PIL import Image
 from pyzbar import pyzbar
-from picamera2 import Picamera2
-import time
-import RPi.GPIO as GPIO
-from mfrc522 import SimpleMFRC522
-
 
 app = Flask(__name__)
 app.secret_key = "your_secret_key"
@@ -121,8 +121,8 @@ def prof_start():
     print("Please scan your RFID professor card to start the lecture:")
     professor_id, professor_name = reader.read()
     print(f"Professor ID: {professor_id}, Professor Name: {professor_name} ")
-    print("Lecture has started. Students can now scan their QR codes.")
     GPIO.cleanup()
+    return "Lecture has started. Students can now scan their QR codes."
 
 
 @app.route("/prof_end", methods=["GET", "POST"])
@@ -131,8 +131,9 @@ def prof_end():
     global professor_name
     print("Please scan your RFID professor card to end the lecture:")
     professor_id, professor_name = reader.read()
-    print(f"Professor ID: {professor_id}, Professor Name: {professor_name} ")
     GPIO.cleanup()
+    print(f"Professor ID: {professor_id}, Professor Name: {professor_name} ")
+    return "Lecture has ended."
 
 
 # Login route
