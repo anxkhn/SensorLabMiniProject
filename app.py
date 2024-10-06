@@ -17,8 +17,12 @@ app.secret_key = "your_secret_key"
 QRcode(app)
 key = "example_key"
 
-# Database initialization
-db = SQL("sqlite:///users.db")
+db_path = "users.db"
+if not os.path.exists(db_path):
+    open(db_path, 'a').close()  # Create an empty file
+
+db = SQL(f"sqlite:///{db_path}")
+
 
 
 def init_db():

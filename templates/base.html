@@ -37,7 +37,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
-            {% if session.username %} {% if session.username == 'prof' %}
+            {% if session.username %} {% if session.user_type == 'professor' %}
             <li class="nav-item">
               <a class="nav-link" href="{{ url_for('prof') }}"
                 >Professor Dashboard</a
