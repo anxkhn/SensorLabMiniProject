@@ -150,13 +150,8 @@ def verify_encoded_username(username, provided_encoded_username, current_time):
 
 
 def get_user_type():
-    if "username" in session:
-        user = db.execute(
-            "SELECT user_type FROM users WHERE username = :username",
-            username=session["username"],
-        )
-        if user:
-            return user[0]["user_type"]
+    if "user_type" in session:
+        return session["user_type"]
     return None
 
 
@@ -283,6 +278,7 @@ def login():
         if user:
             session["username"] = username
             user_type = user[0]["user_type"]
+            session["user_type"] = user_type
             if user_type == "professor":
                 return redirect(url_for("prof"))
             else:
@@ -318,6 +314,8 @@ def signup():
         elif user_type == "professor":
             session["temp_username"] = username
             session["temp_password"] = password
+            session["user_type"] = user_type
+
             return redirect(url_for("prof_signup"))
 
     return render_template("signup.html")
