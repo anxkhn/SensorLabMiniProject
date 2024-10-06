@@ -153,7 +153,6 @@ def verify_encoded_username(username, provided_encoded_username, current_time):
 @app.route("/decode_qr", methods=["POST"])
 def decode_qr():
     picam2 = Picamera2()
-    time.sleep(2)
     picam2.start()
     time.sleep(2)  # Wait for the camera to warm up
 
@@ -162,20 +161,20 @@ def decode_qr():
         temp_filename = "temp_qr_image.jpg"
         picam2.capture_file(temp_filename)
 
-        # Load the captured image
-        image = Image.open(temp_filename)
+        # Stop the camera immediately after capturing
+        picam2.stop()
+        picam2.close()
 
-        # Convert the image to grayscale
-        gray = image.convert("L")
+        # Load and process the captured image
+        with Image.open(temp_filename) as image:
+            gray = image.convert("L")
+            barcodes = pyzbar.decode(gray)
 
-        # Find QR codes in the image
-        barcodes = pyzbar.decode(gray)
+        # Remove the temporary image file
+        os.remove(temp_filename)
 
-        # Check if barcodes are found
         if barcodes:
-            # Loop over the detected barcodes
             for barcode in barcodes:
-                # Extract barcode data
                 barcode_data = barcode.data.decode("utf-8")
                 extracted_username, extracted_hash = barcode_data.split(",")
                 my_time = get_current_time().strftime("%Y-%m-%d %H:%M:%S")
@@ -193,13 +192,10 @@ def decode_qr():
                     return redirect(url_for("student_portal", error="QR code does not match any stored user data."))
         else:
             return redirect(url_for("student_portal", error="No QR code found."))
-    finally:
-        # Stop the camera and remove the temporary image file
-        picam2.stop()
-        picam2.close()
-        os.remove(temp_filename)  # Remove the temporary image file
-        
-        
+    except Exception as e:
+        return redirect(url_for("student_portal", error=f"An error occurred: {str(e)}"))
+
+
 @app.route("/prof_start", methods=["GET", "POST"])
 def prof_start():
     reader = SimpleMFRC522()
