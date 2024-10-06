@@ -2,6 +2,8 @@ import os
 import time
 from datetime import datetime, timedelta
 from hashlib import sha256
+import signal  
+import functools
 
 import RPi.GPIO as GPIO
 from cs50 import SQL
@@ -16,6 +18,33 @@ app = Flask(__name__)
 app.secret_key = "your_secret_key"
 QRcode(app)
 key = "example_key"
+
+GPIO.setmode(GPIO.BCM)
+BUZZER_PIN = 18
+GPIO.setup(BUZZER_PIN, GPIO.OUT)
+reader = SimpleMFRC522()
+
+def beep():
+    GPIO.output(BUZZER_PIN, GPIO.HIGH)  # Turn buzzer on
+    time.sleep(0.2)  # Keep it on for 1 second
+    GPIO.output(BUZZER_PIN, GPIO.LOW)   # Turn buzzer off
+    
+def cleanup_gpio(signum, frame):
+    GPIO.cleanup()  # Clean up GPIO settings
+    print("GPIO cleaned up. Exiting...")
+    exit(0)  # Exit the program
+
+# Register the signal handler for Ctrl+C
+signal.signal(signal.SIGINT, cleanup_gpio)
+
+def beep_before_return(func):
+    @functools.wraps(func)  # Preserve the original function's metadata
+    def wrapper(*args, **kwargs):
+        response = func(*args, **kwargs)
+        beep()  # Beep before returning the response
+        return response
+    return wrapper
+
 
 db_path = "users.db"
 if not os.path.exists(db_path):
@@ -160,6 +189,7 @@ def get_user_type():
 
 # Decode QR code route
 @app.route("/decode_qr", methods=["POST"])
+@beep_before_return
 def decode_qr():
     picam2 = Picamera2()
     picam2.start()
@@ -216,11 +246,11 @@ def decode_qr():
 
 
 @app.route("/prof_start", methods=["GET", "POST"])
+@beep_before_return
+
 def prof_start():
     if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
-
-    reader = SimpleMFRC522()
     global professor_name
     try:
         message = "Please scan your RFID professor card to start the lecture."
@@ -237,16 +267,14 @@ def prof_start():
     except Exception as e:
         error = f"An error occurred: {str(e)}"
         return render_template("prof_action_result.html", error=error)
-    finally:
-        GPIO.cleanup()
 
 
 @app.route("/prof_end", methods=["GET", "POST"])
+@beep_before_return
+
 def prof_end():
     if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
-
-    reader = SimpleMFRC522()
     global professor_name
     try:
         message = "Please scan your RFID professor card to end the lecture."
@@ -263,12 +291,12 @@ def prof_end():
     except Exception as e:
         error = f"An error occurred: {str(e)}"
         return render_template("prof_action_result.html", error=error)
-    finally:
-        GPIO.cleanup()
 
 
 # Login route
 @app.route("/login", methods=["GET", "POST"])
+@beep_before_return
+
 def login():
     if request.method == "POST":
         username = request.form["username"]
@@ -293,6 +321,8 @@ def login():
 
 # Signup route
 @app.route("/signup", methods=["GET", "POST"])
+@beep_before_return
+
 def signup():
     if request.method == "POST":
         username = request.form["username"]
@@ -325,13 +355,14 @@ def signup():
 
 
 @app.route("/prof_signup", methods=["GET", "POST"])
+@beep_before_return
+
 def prof_signup():
     if "temp_username" not in session or "temp_password" not in session:
         print("Temporary credentials not found in session")
         return redirect(url_for("signup"))
 
     if request.method == "POST":
-        reader = SimpleMFRC522()
         try:
             prof_id = request.form["prof_id"]
             data_to_write = f"{session['temp_username']},{prof_id}"
@@ -369,8 +400,6 @@ def prof_signup():
             return render_template(
                 "prof_signup.html", error=f"An error occurred: {str(e)}"
             )
-        finally:
-            GPIO.cleanup()
 
     print("Rendering prof_signup.html")
     return render_template(
@@ -381,6 +410,8 @@ def prof_signup():
 
 # Logout route
 @app.route("/logout")
+@beep_before_return
+
 def logout():
     session.pop("username", None)
     return redirect(url_for("login"))
@@ -400,6 +431,8 @@ def generate_qr():
 
 
 @app.route("/")
+@beep_before_return
+
 def index():
     if is_authenticated():
         if get_user_type() != "professor":
@@ -411,6 +444,8 @@ def index():
 
 # Professor route
 @app.route("/prof")
+@beep_before_return
+
 def prof():
     if not is_authenticated() or session["user_type"] != "professor":
         return redirect(url_for("login"))
@@ -419,6 +454,8 @@ def prof():
 
 # Attendance logs for students
 @app.route("/attendance_logs")
+@beep_before_return
+
 def attendance_logs():
     if not is_authenticated():
         return redirect(url_for("login"))
@@ -436,6 +473,8 @@ def attendance_logs():
 
 # Attendance logs for professors
 @app.route("/prof_attendance_logs")
+@beep_before_return
+
 def prof_attendance_logs():
     if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
@@ -449,6 +488,8 @@ def prof_attendance_logs():
 
 # Lecture logs for professors
 @app.route("/lecture_logs")
+@beep_before_return
+
 def lecture_logs():
     if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
@@ -462,6 +503,8 @@ def lecture_logs():
 
 
 @app.route("/student_portal")
+@beep_before_return
+
 def student_portal():
     if not is_authenticated():
         return redirect(url_for("login"))
