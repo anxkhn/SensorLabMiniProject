@@ -430,6 +430,9 @@ def attendance_logs():
         "SELECT * FROM attendance WHERE username = :username ORDER BY timestamp DESC",
         username=username,
     )
+    for log in logs:
+        log["timestamp"] = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+
     return render_template("attendance_logs.html", logs=logs)
 
 
@@ -440,6 +443,9 @@ def prof_attendance_logs():
         return redirect(url_for("login"))
 
     logs = db.execute("SELECT * FROM attendance ORDER BY timestamp DESC")
+    for log in logs:
+        log["timestamp"] = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+
     return render_template("prof_attendance_logs.html", logs=logs)
 
 
@@ -450,6 +456,8 @@ def lecture_logs():
         return redirect(url_for("login"))
 
     logs = db.execute("SELECT * FROM lectures ORDER BY start_time DESC")
+    for log in logs:
+        log["timestamp"] = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
     return render_template("lecture_logs.html", logs=logs)
 
 

@@ -12,6 +12,8 @@ block content %}
   <tbody>
     {% for log in logs %}
     <tr>
+      <td>{{ log.timestamp.strftime('%Y-%m-%d') }}</td>
+      <td>{{ log.timestamp.strftime('%H:%M:%S') }}</td>
       <td>{{ log.professor }}</td>
     </tr>
     {% endfor %}
