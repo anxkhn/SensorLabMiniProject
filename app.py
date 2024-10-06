@@ -148,6 +148,13 @@ def verify_encoded_username(username, provided_encoded_username, current_time):
     else:
         return False
 
+def get_user_type():
+    if "username" in session:
+        user = db.execute("SELECT user_type FROM users WHERE username = :username", username=session["username"])
+        if user:
+            return user[0]["user_type"]
+    return None
+
 
 # Decode QR code route
 @app.route("/decode_qr", methods=["POST"])
@@ -198,7 +205,7 @@ def decode_qr():
 
 @app.route("/prof_start", methods=["GET", "POST"])
 def prof_start():
-    if not is_authenticated() or session["username"] != "prof":
+    if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
 
     reader = SimpleMFRC522()
@@ -222,7 +229,7 @@ def prof_start():
 
 @app.route("/prof_end", methods=["GET", "POST"])
 def prof_end():
-    if not is_authenticated() or session["username"] != "prof":
+    if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
 
     reader = SimpleMFRC522()
@@ -257,7 +264,8 @@ def login():
         )
         if user:
             session["username"] = username
-            if username == "prof":
+            user_type = user[0]["user_type"]
+            if user_type == "professor":
                 return redirect(url_for("prof"))
             else:
                 return redirect(url_for("student_portal"))
@@ -356,7 +364,7 @@ def generate_qr():
 @app.route("/")
 def index():
     if is_authenticated():
-        if session["username"] == "prof":
+        if get_user_type() != "professor":
             return redirect(url_for("prof"))
         else:
             return redirect(url_for("generate_qr"))
@@ -388,7 +396,7 @@ def attendance_logs():
 # Attendance logs for professors
 @app.route("/prof_attendance_logs")
 def prof_attendance_logs():
-    if not is_authenticated() or session["username"] != "prof":
+    if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
 
     logs = db.execute("SELECT * FROM attendance ORDER BY timestamp DESC")
@@ -398,7 +406,7 @@ def prof_attendance_logs():
 # Lecture logs for professors
 @app.route("/lecture_logs")
 def lecture_logs():
-    if not is_authenticated() or session["username"] != "prof":
+    if not is_authenticated() or get_user_type() != "professor":
         return redirect(url_for("login"))
 
     logs = db.execute("SELECT * FROM lectures ORDER BY start_time DESC")
