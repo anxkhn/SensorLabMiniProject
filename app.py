@@ -19,10 +19,9 @@ key = "example_key"
 
 db_path = "users.db"
 if not os.path.exists(db_path):
-    open(db_path, 'a').close()  # Create an empty file
+    open(db_path, "a").close()  # Create an empty file
 
 db = SQL(f"sqlite:///{db_path}")
-
 
 
 def init_db():
@@ -337,14 +336,14 @@ def prof_signup():
             prof_id = request.form["prof_id"]
             data_to_write = f"{session['temp_username']},{prof_id}"
             print(f"Attempting to write: {data_to_write}")
-            
+
             reader.write(data_to_write)
             print("Data written to RFID card")
 
             # Verify the written data
             id, text = reader.read()
             print(f"Read from RFID card: {text.strip()}")
-            
+
             if text.strip() == data_to_write:
                 print("RFID verification successful")
                 db.execute(
@@ -378,7 +377,6 @@ def prof_signup():
         "prof_signup.html",
         message="Please scan your RFID card to write professor data.",
     )
-
 
 
 # Logout route
@@ -461,6 +459,7 @@ def lecture_logs():
         if log["end_time"]:
             log["end_time"] = datetime.strptime(log["end_time"], "%Y-%m-%d %H:%M:%S")
     return render_template("lecture_logs.html", logs=logs)
+
 
 @app.route("/student_portal")
 def student_portal():
