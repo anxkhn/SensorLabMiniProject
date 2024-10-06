@@ -28,11 +28,12 @@ def init_db():
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT NOT NULL UNIQUE,
-            password TEXT NOT NULL
+            password TEXT NOT NULL,
+            user_type TEXT NOT NULL,
+            prof_id TEXT
         )
     """
     )
-
     # Create attendance table
     db.execute(
         """
@@ -59,15 +60,14 @@ def init_db():
 
     # Insert demo users
     db.execute(
-        "INSERT OR IGNORE INTO users (username, password) VALUES ('student1', 'password1')"
+        "INSERT OR IGNORE INTO users (username, password, user_type) VALUES ('student1', 'password1', 'student')"
     )
     db.execute(
-        "INSERT OR IGNORE INTO users (username, password) VALUES ('student2', 'password2')"
+        "INSERT OR IGNORE INTO users (username, password, user_type) VALUES ('student2', 'password2', 'student')"
     )
     db.execute(
-        "INSERT OR IGNORE INTO users (username, password) VALUES ('prof', 'profpassword')"
+        "INSERT OR IGNORE INTO users (username, password, user_type, prof_id) VALUES ('prof', 'profpassword', 'professor', 'PROF001')"
     )
-
     # Insert demo attendance records
     db.execute(
         """
