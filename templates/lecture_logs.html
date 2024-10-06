@@ -1,20 +1,28 @@
-{% extends "base.html" %} {% block title %}My Attendance Logs{% endblock %} {%
-block content %}
-<h2 class="mb-4">My Attendance Logs</h2>
+{% extends "base.html" %} {% block title %}Lecture Logs{% endblock %} {% block
+content %}
+<h2 class="mb-4">Lecture Logs</h2>
 <table class="table table-striped">
   <thead>
     <tr>
-      <th>Date</th>
-      <th>Time</th>
-      <th>Professor</th>
+      <th>Start Date</th>
+      <th>Start Time</th>
+      <th>End Time</th>
+      <th>Duration</th>
     </tr>
   </thead>
   <tbody>
     {% for log in logs %}
     <tr>
-      <td>{{ log.timestamp.strftime('%Y-%m-%d') }}</td>
-      <td>{{ log.timestamp.strftime('%H:%M:%S') }}</td>
-      <td>{{ log.professor }}</td>
+      <td>{{ log.start_time.strftime('%Y-%m-%d') }}</td>
+      <td>{{ log.start_time.strftime('%H:%M:%S') }}</td>
+      <td>
+        {% if log.end_time %} {{ log.end_time.strftime('%H:%M:%S') }} {% else %}
+        Ongoing {% endif %}
+      </td>
+      <td>
+        {% if log.end_time %} {{ (log.end_time -
+        log.start_time)|string|truncate(8, True, '') }} {% else %} - {% endif %}
+      </td>
     </tr>
     {% endfor %}
   </tbody>
