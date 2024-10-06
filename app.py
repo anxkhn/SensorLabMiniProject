@@ -457,9 +457,10 @@ def lecture_logs():
 
     logs = db.execute("SELECT * FROM lectures ORDER BY start_time DESC")
     for log in logs:
-        log["timestamp"] = datetime.strptime(log["timestamp"], "%Y-%m-%d %H:%M:%S")
+        log["start_time"] = datetime.strptime(log["start_time"], "%Y-%m-%d %H:%M:%S")
+        if log["end_time"]:
+            log["end_time"] = datetime.strptime(log["end_time"], "%Y-%m-%d %H:%M:%S")
     return render_template("lecture_logs.html", logs=logs)
-
 
 @app.route("/student_portal")
 def student_portal():
