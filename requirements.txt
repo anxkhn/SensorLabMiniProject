@@ -1,3 +1,7 @@
 cs50==9.3.4
 Flask==3.0.2
 Flask_QRcode==3.1.0
+Pillow==9.5.0
+pyzbar==0.1.9
+RPi.GPIO==0.7.1
+picamera2==0.3.12

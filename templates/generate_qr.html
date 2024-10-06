@@ -1,18 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Generate QR Code</title>
-  </head>
-  <body>
-    <h2>QR Code</h2>
-    <img src="{{ qrcode(img_str) }}" />
-    <br /><br />
+{% extends "base.html" %} {% block title %}Generate QR Code{% endblock %} {%
+block content %}
+<div class="row justify-content-center">
+  <div class="col-md-6 text-center">
+    <h2 class="mb-4">Your QR Code</h2>
+    <img src="{{ qrcode(img_str) }}" class="img-fluid mb-4" alt="QR Code" />
     <form action="/decode_qr" method="post">
-      <button type="submit">Decode QR</button>
+      <button type="submit" class="btn btn-primary">Decode QR</button>
     </form>
-    <br /><br />
-    <a href="/logout">Logout</a>
-  </body>
-</html>
+  </div>
+</div>
+{% endblock %}

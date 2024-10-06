@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Attendance Logs{% endblock %}
+
+{% block content %}
+<h2 class="mb-4">Attendance Logs</h2>
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Student</th>
+            <th>Professor</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for log in logs %}
+        <tr>
+            <td>{{ log.timestamp.strftime('%Y-%m-%d') }}</td>
+            <td>{{ log.timestamp.strftime('%H:%M:%S') }}</td>
+            <td>{{ log.username }}</td>
+            <td>{{ log.professor }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

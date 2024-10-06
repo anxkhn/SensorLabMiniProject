@@ -1,17 +1,18 @@
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Professor Page</title>
-  </head>
-  <body>
-    <h1>Welcome, Professor!</h1>
-    <form action="{{ url_for('prof_start') }}" method="POST">
-      <button type="submit">Professor Start</button>
+{% extends "base.html" %} {% block title %}Professor Dashboard{% endblock %} {%
+block content %}
+<h2 class="mb-4">Welcome, Professor!</h2>
+<div class="row">
+  <div class="col-md-6">
+    <form action="{{ url_for('prof_start') }}" method="POST" class="mb-3">
+      <button type="submit" class="btn btn-success btn-lg">
+        Start Lecture
+      </button>
     </form>
-    <form action="{{ url_for('prof_end') }}" method="POST">
-      <button type="submit">Professor End</button>
+  </div>
+  <div class="col-md-6">
+    <form action="{{ url_for('prof_end') }}" method="POST" class="mb-3">
+      <button type="submit" class="btn btn-danger btn-lg">End Lecture</button>
     </form>
-  </body>
-</html>
+  </div>
+</div>
+{% endblock %}
