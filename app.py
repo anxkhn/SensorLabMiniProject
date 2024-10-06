@@ -187,24 +187,19 @@ def decode_qr():
                         professor=professor_name,
                         timestamp=datetime.now(),
                     )
-                    return jsonify(
-                        {
-                            "message": f"Attendance marked for {extracted_username}, Lecture by {professor_name}"
-                        }
-                    )
+                    session["username"] = extracted_username
+                    return redirect(url_for("student_portal", message=f"Attendance marked for lecture by {professor_name}"))
                 else:
-                    return jsonify(
-                        {"message": "QR code does not match any stored user data."}
-                    )
+                    return redirect(url_for("student_portal", error="QR code does not match any stored user data."))
         else:
-            return jsonify({"message": "No QR code found."})
+            return redirect(url_for("student_portal", error="No QR code found."))
     finally:
         # Stop the camera and remove the temporary image file
         picam2.stop()
         picam2.close()
         os.remove(temp_filename)  # Remove the temporary image file
-
-
+        
+        
 @app.route("/prof_start", methods=["GET", "POST"])
 def prof_start():
     reader = SimpleMFRC522()
@@ -355,6 +350,20 @@ def lecture_logs():
 
     logs = db.execute("SELECT * FROM lectures ORDER BY start_time DESC")
     return render_template("lecture_logs.html", logs=logs)
+
+@app.route("/student_portal")
+def student_portal():
+    if not is_authenticated():
+        return redirect(url_for("login"))
+
+    username = session["username"]
+    logs = db.execute(
+        "SELECT * FROM attendance WHERE username = :username ORDER BY timestamp DESC",
+        username=username,
+    )
+    message = request.args.get("message")
+    error = request.args.get("error")
+    return render_template("student_portal.html", logs=logs, message=message, error=error)
 
 
 if __name__ == "__main__":
