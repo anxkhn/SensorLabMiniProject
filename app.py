@@ -324,6 +324,7 @@ def signup():
 @app.route("/prof_signup", methods=["GET", "POST"])
 def prof_signup():
     if "temp_username" not in session or "temp_password" not in session:
+        print("Temporary credentials not found in session")
         return redirect(url_for("signup"))
 
     if request.method == "POST":
@@ -331,11 +332,17 @@ def prof_signup():
         try:
             prof_id = request.form["prof_id"]
             data_to_write = f"{session['temp_username']},{prof_id}"
+            print(f"Attempting to write: {data_to_write}")
+            
             reader.write(data_to_write)
+            print("Data written to RFID card")
 
             # Verify the written data
             id, text = reader.read()
+            print(f"Read from RFID card: {text.strip()}")
+            
             if text.strip() == data_to_write:
+                print("RFID verification successful")
                 db.execute(
                     "INSERT INTO users (username, password, user_type, prof_id) VALUES (:username, :password, :user_type, :prof_id)",
                     username=session["temp_username"],
@@ -343,27 +350,31 @@ def prof_signup():
                     user_type="professor",
                     prof_id=prof_id,
                 )
+                print("User inserted into database")
                 session["username"] = session["temp_username"]
                 session.pop("temp_username")
                 session.pop("temp_password")
                 print("Prof signup done, moving to /prof")
                 return redirect(url_for("prof"))
             else:
+                print("RFID verification failed")
                 return render_template(
                     "prof_signup.html", error="Verification failed. Please try again."
                 )
         except Exception as e:
+            print(f"Error during signup: {str(e)}")
             return render_template(
                 "prof_signup.html", error=f"An error occurred: {str(e)}"
             )
         finally:
             GPIO.cleanup()
 
-
+    print("Rendering prof_signup.html")
     return render_template(
         "prof_signup.html",
         message="Please scan your RFID card to write professor data.",
     )
+
 
 
 # Logout route
