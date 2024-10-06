@@ -9,7 +9,34 @@ content %}
   <div class="alert alert-danger" role="alert">{{ error }}</div>
   {% endif %}
 
-  <h3 class="mb-3">Your Attendance Logs</h3>
+  <div class="row">
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Mark Attendance</h5>
+          <p class="card-text">
+            Generate a QR code to mark your attendance for the current lecture.
+          </p>
+          <a href="{{ url_for('generate_qr') }}" class="btn btn-primary"
+            >Generate QR Code</a
+          >
+        </div>
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card mb-4">
+        <div class="card-body">
+          <h5 class="card-title">Attendance Stats</h5>
+          <p class="card-text">View your attendance records and statistics.</p>
+          <a href="{{ url_for('attendance_logs') }}" class="btn btn-primary"
+            >View Attendance Stats</a
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h3 class="mb-3">Recent Attendance Logs</h3>
   <table class="table table-striped">
     <thead>
       <tr>
@@ -21,16 +48,12 @@ content %}
     <tbody>
       {% for log in logs %}
       <tr>
+        <td>{{ log.timestamp.strftime('%Y-%m-%d') }}</td>
+        <td>{{ log.timestamp.strftime('%H:%M:%S') }}</td>
         <td>{{ log.professor }}</td>
       </tr>
       {% endfor %}
     </tbody>
   </table>
-
-  <div class="mt-4">
-    <a href="{{ url_for('generate_qr') }}" class="btn btn-primary"
-      >Generate QR Code</a
-    >
-  </div>
 </div>
 {% endblock %}

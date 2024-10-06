@@ -27,6 +27,30 @@
           required
         />
       </div>
+      <div class="mb-3">
+        <label class="form-label">User Type:</label>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="user_type"
+            id="student"
+            value="student"
+            checked
+          />
+          <label class="form-check-label" for="student"> Student </label>
+        </div>
+        <div class="form-check">
+          <input
+            class="form-check-input"
+            type="radio"
+            name="user_type"
+            id="professor"
+            value="professor"
+          />
+          <label class="form-check-label" for="professor"> Professor </label>
+        </div>
+      </div>
       <button type="submit" class="btn btn-primary">Signup</button>
     </form>
   </div>

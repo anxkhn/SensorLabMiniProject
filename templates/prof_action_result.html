@@ -1,0 +1,14 @@
+{% extends "base.html" %} {% block title %}Professor Action Result{% endblock %}
+{% block content %}
+<div class="container">
+  <h2 class="mb-4">Professor Action Result</h2>
+  {% if message %}
+  <div class="alert alert-success" role="alert">{{ message }}</div>
+  {% endif %} {% if error %}
+  <div class="alert alert-danger" role="alert">{{ error }}</div>
+  {% endif %}
+  <a href="{{ url_for('prof') }}" class="btn btn-primary"
+    >Back to Professor Dashboard</a
+  >
+</div>
+{% endblock %}

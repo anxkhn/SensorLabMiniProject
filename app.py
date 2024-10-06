@@ -198,39 +198,51 @@ def decode_qr():
 
 @app.route("/prof_start", methods=["GET", "POST"])
 def prof_start():
+    if not is_authenticated() or session["username"] != "prof":
+        return redirect(url_for("login"))
+
     reader = SimpleMFRC522()
     global professor_name
-    print("Please scan your RFID professor card to start the lecture:")
-    professor_id, professor_name = reader.read()
-    GPIO.cleanup()
-    # Log lecture start
-    db.execute(
-        "INSERT INTO lectures (professor, start_time) VALUES (:professor, :start_time)",
-        professor=professor_name,
-        start_time=datetime.now(),
-    )
-    return jsonify(
-        {
-            "message": f"Lecture started by Professor {professor_name}. Students can now scan their QR codes."
-        }
-    )
-
+    try:
+        print("Please scan your RFID professor card to start the lecture:")
+        professor_id, professor_name = reader.read()
+        # Log lecture start
+        db.execute(
+            "INSERT INTO lectures (professor, start_time) VALUES (:professor, :start_time)",
+            professor=professor_name,
+            start_time=datetime.now(),
+        )
+        message = f"Lecture started by Professor {professor_name}. Students can now scan their QR codes."
+        return render_template("prof_action_result.html", message=message)
+    except Exception as e:
+        error = f"An error occurred: {str(e)}"
+        return render_template("prof_action_result.html", error=error)
+    finally:
+        GPIO.cleanup()
 
 @app.route("/prof_end", methods=["GET", "POST"])
 def prof_end():
+    if not is_authenticated() or session["username"] != "prof":
+        return redirect(url_for("login"))
+
     reader = SimpleMFRC522()
     global professor_name
-    print("Please scan your RFID professor card to end the lecture:")
-    professor_id, professor_name = reader.read()
-    GPIO.cleanup()
-    # Log lecture end
-    db.execute(
-        "UPDATE lectures SET end_time = :end_time WHERE professor = :professor AND end_time IS NULL",
-        end_time=datetime.now(),
-        professor=professor_name,
-    )
-    return jsonify({"message": f"Lecture ended by Professor {professor_name}."})
-
+    try:
+        print("Please scan your RFID professor card to end the lecture:")
+        professor_id, professor_name = reader.read()
+        # Log lecture end
+        db.execute(
+            "UPDATE lectures SET end_time = :end_time WHERE professor = :professor AND end_time IS NULL",
+            end_time=datetime.now(),
+            professor=professor_name,
+        )
+        message = f"Lecture ended by Professor {professor_name}."
+        return render_template("prof_action_result.html", message=message)
+    except Exception as e:
+        error = f"An error occurred: {str(e)}"
+        return render_template("prof_action_result.html", error=error)
+    finally:
+        GPIO.cleanup()
 
 # Login route
 @app.route("/login", methods=["GET", "POST"])
@@ -248,11 +260,10 @@ def login():
             if username == "prof":
                 return redirect(url_for("prof"))
             else:
-                return redirect(url_for("generate_qr"))
+                return redirect(url_for("student_portal"))
         else:
             return render_template("login.html", error="Invalid username or password")
     return render_template("login.html")
-
 
 # Signup route
 @app.route("/signup", methods=["GET", "POST"])
@@ -260,20 +271,66 @@ def signup():
     if request.method == "POST":
         username = request.form["username"]
         password = request.form["password"]
+        user_type = request.form["user_type"]
+        
         existing_user = db.execute(
             "SELECT * FROM users WHERE username = :username", username=username
         )
         if existing_user:
             return render_template("signup.html", error="Username already exists")
-        else:
+        
+        if user_type == "student":
             db.execute(
-                "INSERT INTO users (username, password) VALUES (:username, :password)",
+                "INSERT INTO users (username, password, user_type) VALUES (:username, :password, :user_type)",
                 username=username,
                 password=password,
+                user_type="student"
             )
             session["username"] = username
-            return redirect(url_for("generate_qr"))
+            return redirect(url_for("student_portal"))
+        elif user_type == "professor":
+            session["temp_username"] = username
+            session["temp_password"] = password
+            return redirect(url_for("prof_signup"))
+    
     return render_template("signup.html")
+
+@app.route("/prof_signup", methods=["GET", "POST"])
+def prof_signup():
+    if "temp_username" not in session or "temp_password" not in session:
+        return redirect(url_for("signup"))
+    
+    if request.method == "POST":
+        reader = SimpleMFRC522()
+        try:
+            print("Please scan your RFID card to write professor data:")
+            prof_id = request.form["prof_id"]
+            data_to_write = f"{session['temp_username']},{prof_id}"
+            reader.write(data_to_write)
+            print("Data written successfully. Please scan the card again to verify.")
+            
+            # Verify the written data
+            id, text = reader.read()
+            if text.strip() == data_to_write:
+                db.execute(
+                    "INSERT INTO users (username, password, user_type, prof_id) VALUES (:username, :password, :user_type, :prof_id)",
+                    username=session["temp_username"],
+                    password=session["temp_password"],
+                    user_type="professor",
+                    prof_id=prof_id
+                )
+                session.pop("temp_username")
+                session.pop("temp_password")
+                session["username"] = session["temp_username"]
+                return redirect(url_for("prof"))
+            else:
+                return render_template("prof_signup.html", error="Verification failed. Please try again.")
+        except Exception as e:
+            return render_template("prof_signup.html", error=f"An error occurred: {str(e)}")
+        finally:
+            GPIO.cleanup()
+    
+    return render_template("prof_signup.html")
 
 
 # Logout route
@@ -354,14 +411,17 @@ def student_portal():
 
     username = session["username"]
     logs = db.execute(
-        "SELECT * FROM attendance WHERE username = :username ORDER BY timestamp DESC",
+        "SELECT * FROM attendance WHERE username = :username ORDER BY timestamp DESC LIMIT 5",
         username=username,
     )
+    
+    # Convert timestamp strings to datetime objects
+    for log in logs:
+        log['timestamp'] = datetime.strptime(log['timestamp'], '%Y-%m-%d %H:%M:%S')
+    
     message = request.args.get("message")
     error = request.args.get("error")
     return render_template("student_portal.html", logs=logs, message=message, error=error)
-
-
 if __name__ == "__main__":
     init_db()
     app.run(host="0.0.0.0", port=80, debug=True)
