@@ -330,35 +330,58 @@ def prof_signup():
 
     if request.method == "POST":
         reader = SimpleMFRC522()
-        try:
-            prof_id = request.form["prof_id"]
-            data_to_write = f"{session['temp_username']},{prof_id}"
-            reader.write(data_to_write)
+        # try:
+        #     prof_id = request.form["prof_id"]
+        #     data_to_write = f"{session['temp_username']},{prof_id}"
+        #     reader.write(data_to_write)
 
-            # Verify the written data
-            id, text = reader.read()
-            if text.strip() == data_to_write:
-                db.execute(
-                    "INSERT INTO users (username, password, user_type, prof_id) VALUES (:username, :password, :user_type, :prof_id)",
-                    username=session["temp_username"],
-                    password=session["temp_password"],
-                    user_type="professor",
-                    prof_id=prof_id,
-                )
-                session.pop("temp_username")
-                session.pop("temp_password")
-                session["username"] = session["temp_username"]
-                return redirect(url_for("prof"))
-            else:
-                return render_template(
-                    "prof_signup.html", error="Verification failed. Please try again."
-                )
-        except Exception as e:
-            return render_template(
-                "prof_signup.html", error=f"An error occurred: {str(e)}"
+        #     # Verify the written data
+        #     id, text = reader.read()
+        #     if text.strip() == data_to_write:
+        #         db.execute(
+        #             "INSERT INTO users (username, password, user_type, prof_id) VALUES (:username, :password, :user_type, :prof_id)",
+        #             username=session["temp_username"],
+        #             password=session["temp_password"],
+        #             user_type="professor",
+        #             prof_id=prof_id,
+        #         )
+        #         session.pop("temp_username")
+        #         session.pop("temp_password")
+        #         session["username"] = session["temp_username"]
+        #         return redirect(url_for("prof"))
+        #     else:
+        #         return render_template(
+        #             "prof_signup.html", error="Verification failed. Please try again."
+        #         )
+        # except Exception as e:
+        #     return render_template(
+        #         "prof_signup.html", error=f"An error occurred: {str(e)}"
+        #     )
+        # finally:
+        #     GPIO.cleanup()
+
+        prof_id = request.form["prof_id"]
+        data_to_write = f"{session['temp_username']},{prof_id}"
+        reader.write(data_to_write)
+
+        # Verify the written data
+        id, text = reader.read()
+        if text.strip() == data_to_write:
+            db.execute(
+                "INSERT INTO users (username, password, user_type, prof_id) VALUES (:username, :password, :user_type, :prof_id)",
+                username=session["temp_username"],
+                password=session["temp_password"],
+                user_type="professor",
+                prof_id=prof_id,
             )
-        finally:
-            GPIO.cleanup()
+            session.pop("temp_username")
+            session.pop("temp_password")
+            session["username"] = session["temp_username"]
+            return redirect(url_for("prof"))
+        else:
+            return render_template(
+                "prof_signup.html", error="Verification failed. Please try again."
+            )
 
     return render_template(
         "prof_signup.html",
