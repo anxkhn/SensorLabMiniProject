@@ -410,7 +410,7 @@ def index():
 # Professor route
 @app.route("/prof")
 def prof():
-    if not is_authenticated() or session["username"] != "prof":
+    if not is_authenticated() or session["user_type"] != "professor":
         return redirect(url_for("login"))
     return render_template("prof.html")
 
