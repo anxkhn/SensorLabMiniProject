@@ -346,7 +346,7 @@ def prof_signup():
                 session["username"] = session["temp_username"]
                 session.pop("temp_username")
                 session.pop("temp_password")
-
+                print("Prof signup done, moving to /prof")
                 return redirect(url_for("prof"))
             else:
                 return render_template(
