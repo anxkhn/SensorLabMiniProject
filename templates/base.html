@@ -27,8 +27,8 @@
         <button
           class="navbar-toggler"
           type="button"
-          data-bs-toggle="collapse"
-          data-bs-target="#navbarNav"
+          data-mdb-toggle="collapse" <!-- change here to `data-mdb-toggle` for MDB -->
+          data-mdb-target="#navbarNav" <!-- change here to `data-mdb-target` for MDB -->
           aria-controls="navbarNav"
           aria-expanded="false"
           aria-label="Toggle navigation"
@@ -37,57 +37,47 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
           <ul class="navbar-nav ms-auto">
-            {% if session.username %} {% if session.user_type == 'professor' %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('prof') }}"
-                >Professor Dashboard</a
-              >
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('prof_attendance_logs') }}"
-                >Attendance Logs</a
-              >
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('lecture_logs') }}"
-                >Lecture Logs</a
-              >
-            </li>
+            {% if session.username %} 
+              {% if session.user_type == 'professor' %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('prof') }}">Professor Dashboard</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('prof_attendance_logs') }}">Attendance Logs</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('lecture_logs') }}">Lecture Logs</a>
+                </li>
+              {% else %}
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('generate_qr') }}">Generate QR</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('attendance_logs') }}">My Attendance</a>
+                </li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('student_portal') }}">Student Portal</a>
+                </li>
+              {% endif %}
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+              </li>
             {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('generate_qr') }}"
-                >Generate QR</a
-              >
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('attendance_logs') }}"
-                >My Attendance</a
-              >
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('student_portal') }}"
-                >Student Portal</a
-              >
-            </li>
-
-            {% endif %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
-            </li>
-            {% else %}
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('login') }}">Login</a>
-            </li>
-            <li class="nav-item">
-              <a class="nav-link" href="{{ url_for('signup') }}">Signup</a>
-            </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link" href="{{ url_for('signup') }}">Signup</a>
+              </li>
             {% endif %}
           </ul>
         </div>
       </div>
     </nav>
 
-    <div class="container mt-4">{% block content %}{% endblock %}</div>
+    <div class="container mt-4">
+      {% block content %}{% endblock %}
+    </div>
 
     <!-- MDB -->
     <script
