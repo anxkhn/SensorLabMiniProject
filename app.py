@@ -50,7 +50,7 @@ db_path = "users.db"
 if not os.path.exists(db_path):
     open(db_path, "a").close()  # Create an empty file
 
-db = SQL(f"sqlite:///{db_path}")
+db = SQL(f"mysql://root:BcVikLfbCHymfSaJXfRwJrcirHxJhMlo@junction.proxy.rlwy.net:13443/railway")
 
 
 def init_db():
